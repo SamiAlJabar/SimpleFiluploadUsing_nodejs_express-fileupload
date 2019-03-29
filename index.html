@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Fileupload App</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+
+    <style>
+        .imagePreview {
+            width: 40%;
+            height: 300px;
+            background-position: center center;
+            background-size: cover;
+        background-repeat:no-repeat;
+            display: inline-block;
+        }
+        .imgUp
+        {
+        margin-bottom:15px;
+        }
+        .photo-upload {
+        background-color:rgb(40, 124, 58);
+        width: 100px;
+        margin-right: 10px;
+        text-align: center;
+        padding:10px;
+        cursor: pointer;
+        color: white;
+        font-style: normal;
+        }
+        .photo-upload:hover {
+        opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+    <h1 style="margin-top: 15vh" class="container">UPLOAD FILE</h1>
+    <form class="col-md-12" id="postForm">
+        <div style="margin-top: 3vh;" class="container">
+            <div style="text-align: left" class="imgUp">
+                <label class="photo-upload">
+                    <input id="realImageName" name="filename" type="file" class="uploadFile img" accept=".png, .jpg, .jpeg" style="width: 0px;height: 0px;overflow: hidden;">
+                    <i class="fa fa-photo"> Photo</i>
+                </label>
+                <button class="btn btn-primary" type="button" onclick="postSubmit();" style="padding: 10px; width: 200px;">Post</button>
+                <br>
+                <div class="imagePreview" hidden="true"></div>
+            </div>
+        </div>
+    </form>
+    <div style="margin-top: 10vh">
+        <ul style="list-style-type: none;" id="userPosts">
+        </ul>
+    </div>
+
+    <!-- JAVASCRIPT -->
+    <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <script>
+        var imageFile;
+        $(function() {
+            document.getElementById('userPosts').innerHTML = '<p class="container" style="color: red">No uploads yet!</p>';
+            $(document).on("change",".uploadFile", function() // EVENT TRIGGER ON IMAGE UPLOAD
+            {
+                $('.imagePreview').show();
+                var uploadFile = $(this);
+                var files = !!this.files ? this.files : [];
+                if (!files.length || !window.FileReader) return; // no file selected, or no FileReader support
+                if (/^image/.test( files[0].type)){ // only image file
+                    var reader = new FileReader(); // instance of the FileReader
+                    reader.readAsDataURL(files[0]); // read the local file
+                    reader.onloadend = function(){ // set image data as background of div
+                        uploadFile.closest(".imgUp").find('.imagePreview').css("background-image", "url("+this.result+")");
+                    }
+                }
+                imageFile = files[0];
+            });
+        });
+
+        function postSubmit() {
+            var realImageName = document.querySelector('#realImageName');
+            var formData = document.getElementById("postForm").elements;
+            if(!realImageName.files[0]) { // IF IMAGE NOT UPLOADED
+                alert('Please upload an image for sharing!');
+                return;
+            }
+            var data = new FormData();
+            data.append('image', realImageName.files[0]);
+            jQuery.ajax({
+                url: '/fileUpload',
+                data: data,
+                cache: false,
+                contentType: false,
+                processData: false,
+                method: 'POST',
+                type: 'POST',
+                success: function(data) {
+                    alert('Post uploaded successfully!');
+                    $('.imagePreview').hide();
+                    loadImages(data); // AFTER UPLOAD IS COMPLETE, DISPLAY IMAGES
+                }
+            });
+        }
+
+        function loadImages(imageList) { // FOR DISPLAYING THE IMAGES
+            document.getElementById('userPosts').innerHTML = '';
+            imageList.reverse(); // LIST REVERSE IN ORDER TO GET THE RECENT UPLOADED IMAGE FIRST
+            imageList.forEach(element => {
+                document.getElementById('userPosts').innerHTML += '<li class="col-md-4 text-center" style="border: 2px solid black; padding: 10px; display: inline-block;"> <div> <img style="max-height: 250px;" src="'+element.imageUrl+'" alt="post_image"> </div> <div class="col-md-6"></div> </li>';    
+            });
+        }
+    </script>
+</body>
+
+</html>
